@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Portal</title>
+</head>
+<body>
+  <h1>Admin Portal</h1>
+  <h2>Create Quiz</h2>
+  <form id="createQuizForm">
+    <input type="text" id="quizName" placeholder="Quiz Name" required>
+    <button type="submit">Create Quiz</button>
+  </form>
+  <h2>Add Question</h2>
+  <form id="addQuestionForm">
+    <select id="quizId"></select>
+    <input type="text" id="questionText" placeholder="Question Text" required>
+    <input type="text" id="option1" placeholder="Option 1" required>
+    <input type="text" id="option2" placeholder="Option 2" required>
+    <input type="text" id="option3" placeholder="Option 3" required>
+    <input type="text" id="option4" placeholder="Option 4" required>
+    <select id="correctOption">
+      <option value="0">Option 1</option>
+      <option value="1">Option 2</option>
+      <option value="2">Option 3</option>
+      <option value="3">Option 4</option>
+    </select>
+    <input type="text" id="explanation" placeholder="Explanation">
+    <button type="submit">Add Question</button>
+  </form>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = 'login.html';
+      }
+
+      const res = await fetch('http://localhost:5000/api/admin/quiz', {
+        method: 'GET',
+        headers: { 'x-auth-token': token }
+      });
+
+      const quizzes = await res.json();
+      const quizIdSelect = document.getElementById('quizId');
+      quizzes.forEach(quiz => {
+        const option = document.createElement('option');
+        option.value = quiz._id;
+        option.text = quiz.name;
+        quizIdSelect.add(option);
+      });
+    });
+
+    document.getElementById('createQuizForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const quizName = document.getElementById('quizName').value;
+      const token = localStorage.getItem('token');
+
+      const res = await fetch('http://localhost:5000/api/admin/quiz', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token
+        },
+        body: JSON.stringify({ name: quizName })
+      });
+
+      const data = await res.json();
+      alert('Quiz created: ' + data.name);
+    });
+
+    document.getElementById('addQuestionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const quizId = document.getElementById('quizId').value;
+      const questionText = document.getElementById('questionText').value;
+      const options = [
+        { text: document.getElementById('option1').value, isCorrect: document.getElementById('correctOption').value == 0 },
+        { text: document.getElementById('option2').value, isCorrect: document.getElementById('correctOption').value == 1 },
+        { text: document.getElementById('option3').value, isCorrect: document.getElementById('correctOption').value == 2 },
+        { text: document.getElementById('option4').value, isCorrect: document.getElementById('correctOption').value == 3 },
+      ];
+      const explanation = document.getElementById('explanation').value;
+      const token = localStorage.getItem('token');
+
+      const res = await fetch('http://localhost:5000/api/admin/question', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token
+        },
+        body: JSON.stringify({ quizId, questionText, options, explanation })
+      });
+
+      const data = await res.json();
+      alert('Question added: ' + data.questionText);
+    });
+  </script>
+</body>
+</html>
